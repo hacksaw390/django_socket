@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title></title>
+  </head>
+  <body>
+    <h1>Chat</h1>
+    <h3>Group: {{groupname}} </h3>
+
+    <div id="messages">
+    {% for chat in chats  %}
+      {{chat.content}}<br>
+      {% endfor %}
+    </div>
+
+    <form id="form">
+      <input type="text" name="message" />
+    </form>
+    {{groupname|json_script:"group-name"}}
+    <script>
+
+
+      const groutName = JSON.parse(document.getElementById('group-name').textContent)
+      console.log(groutName) 
+      
+
+
+      const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/socket-server/' + groutName + '/')
+
+      chatSocket.onopen = function(){
+        console.log('html connecttion open------')
+        chatSocket.send('hi, ami html theke')
+      }
+
+      chatSocket.onmessage = function(e){
+        console.log(e)
+        const data = JSON.parse(e.data)
+        console.log(data.message)
+
+        if(data.type ==='chat') {
+          let messages = document.getElementById('messages')
+          messages.insertAdjacentHTML('beforeend', `<div> <p>${data.message}</p> </div>`)
+      }
+    }
+
+
+      let form = document.getElementById('form')
+      form.addEventListener('submit', e => {
+        e.preventDefault()
+        let message = e.target.message.value
+        chatSocket.send(JSON.stringify({
+          message: message,
+        
+        }))
+        form.reset()
+      })  
+    </script>
+  </body>
+</html>
